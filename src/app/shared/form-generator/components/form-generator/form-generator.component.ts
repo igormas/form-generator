@@ -7,6 +7,7 @@ import {
   viewChild,
   AfterViewInit,
   signal,
+  OnDestroy,
 } from '@angular/core';
 import { IFormControl } from './utility/form-control';
 import { toObservable } from '@angular/core/rxjs-interop';
@@ -14,7 +15,11 @@ import {
   HttpClient,
   HttpClientModule,
 } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import {
+  firstValueFrom,
+  Subject,
+  takeUntil,
+} from 'rxjs';
 
 @Component({
   selector: 'app-form-generator',
@@ -23,14 +28,15 @@ import { firstValueFrom } from 'rxjs';
   templateUrl: './form-generator.component.html',
   styleUrl: './form-generator.component.scss',
 })
-export class FormGeneratorComponent implements AfterViewInit {
+export class FormGeneratorComponent implements AfterViewInit, OnDestroy {
   private _httpClient = inject(HttpClient);
 
-  private _controlsContainerElem = viewChild.required<ElementRef<HTMLElement>>('controlsContainer');
+  private _formValue: Record<string, any> = {};
+  private _destroy$ = new Subject<void>();
+
+  controlsContainerElem = viewChild.required<ElementRef<HTMLElement>>('controlsContainer');
   saveUrl = input.required<string>();
   formControlList = input.required<IFormControl[]>();
-
-  private _formValue: Record<string, any> = {};
 
   formControlList$ = toObservable(this.formControlList);
 
@@ -59,9 +65,12 @@ export class FormGeneratorComponent implements AfterViewInit {
   }
 
   private _startFormBuilder(): void {
-    const controlsContainerElem: HTMLElement = this._controlsContainerElem().nativeElement;
+    const controlsContainerElem: HTMLElement = this.controlsContainerElem().nativeElement;
     // TODO add unsubscribe
     this.formControlList$
+      .pipe(
+        takeUntil(this._destroy$),
+      )
       .subscribe((formControlList) => {
         controlsContainerElem.innerHTML = '';
         this._formValue = {};
@@ -73,7 +82,7 @@ export class FormGeneratorComponent implements AfterViewInit {
   }
 
   protected _save(): void {
-    const isFormValid = !this._controlsContainerElem().nativeElement.querySelector('.invalid');
+    const isFormValid = !this.controlsContainerElem().nativeElement.querySelector('.invalid');
     if (!isFormValid) {
       alert('Form is invalid');
       return;
@@ -84,5 +93,9 @@ export class FormGeneratorComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this._startFormBuilder();
+  }
+
+  ngOnDestroy(): void {
+    this._destroy$.next();
   }
 }
