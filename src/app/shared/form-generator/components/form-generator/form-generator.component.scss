@@ -1,0 +1,12 @@
+.form-generator__controls-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 200px;
+  margin-bottom: 20px;
+}
+
+::ng-deep input.invalid {
+  outline: none;
+  border: 1px solid red;
+}
