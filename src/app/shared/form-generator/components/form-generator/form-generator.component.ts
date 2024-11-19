@@ -66,7 +66,6 @@ export class FormGeneratorComponent implements AfterViewInit, OnDestroy {
 
   private _startFormBuilder(): void {
     const controlsContainerElem: HTMLElement = this.controlsContainerElem().nativeElement;
-    // TODO add unsubscribe
     this.formControlList$
       .pipe(
         takeUntil(this._destroy$),
